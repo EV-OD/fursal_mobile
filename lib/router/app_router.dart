@@ -1,0 +1,103 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../features/auth/data/auth_repository.dart';
+import '../features/auth/presentation/get_started_screen.dart';
+import '../features/auth/presentation/login_screen.dart';
+import '../features/bookings/presentation/booking_screen.dart';
+import '../features/home/presentation/home_screen.dart';
+import '../features/profile/presentation/profile_screen.dart';
+import '../features/venues/presentation/venue_detail_screen.dart';
+import '../shared/widgets/scaffold_with_navbar.dart';
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
+final _shellNavigatorBookingKey = GlobalKey<NavigatorState>(debugLabel: 'shellBooking');
+final _shellNavigatorProfileKey = GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authStateProvider);
+
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const GetStartedScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ScaffoldWithNavBar(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorHomeKey,
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const HomeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'venue/:id', // Note: relative path, so it becomes /home/venue/:id
+                    parentNavigatorKey: _rootNavigatorKey, // Hide bottom nav
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return VenueDetailScreen(venueId: id);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorBookingKey,
+            routes: [
+              GoRoute(
+                path: '/bookings',
+                builder: (context, state) => const BookingScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorProfileKey,
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+    redirect: (context, state) {
+      final isLoading = authState.isLoading;
+      final hasError = authState.hasError;
+      final isLoggedIn = authState.valueOrNull != null;
+      
+      final isLoggingIn = state.uri.toString() == '/login';
+      final isGetStarted = state.uri.toString() == '/';
+
+      if (isLoading || hasError) return null;
+
+      if (isLoggedIn) {
+        // If logged in and trying to access auth pages, redirect to home
+        if (isGetStarted || isLoggingIn) {
+          return '/home';
+        }
+      } else {
+        // If not logged in and trying to access protected pages, redirect to get started
+        if (!isGetStarted && !isLoggingIn) {
+          return '/';
+        }
+      }
+
+      return null;
+    },
+  );
+});

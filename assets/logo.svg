@@ -1,0 +1,68 @@
+<svg width="512" height="512" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient
+      id="ballGradient"
+      x1="4"
+      y1="4"
+      x2="36"
+      y2="36"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#22c55e" />
+      <stop offset="1" stop-color="#15803d" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ball Body - Circle -->
+  <circle cx="20" cy="20" r="18" fill="url(#ballGradient)" />
+
+  <!-- Football Pattern: Stylized Panels -->
+  <path
+    d="M20 10L29.5 16.9V28.1L20 35L10.5 28.1V16.9L20 10Z"
+    fill="white"
+    fill-opacity="0.15"
+  />
+
+  <!-- Connecting lines suggesting spherical shape -->
+  <path
+    d="M20 10V2"
+    stroke="white"
+    stroke-width="1.5"
+    stroke-opacity="0.2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M29.5 16.9L36 12"
+    stroke="white"
+    stroke-width="1.5"
+    stroke-opacity="0.2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M29.5 28.1L36 32"
+    stroke="white"
+    stroke-width="1.5"
+    stroke-opacity="0.2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M10.5 28.1L4 32"
+    stroke="white"
+    stroke-width="1.5"
+    stroke-opacity="0.2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M10.5 16.9L4 12"
+    stroke="white"
+    stroke-width="1.5"
+    stroke-opacity="0.2"
+    stroke-linecap="round"
+  />
+
+  <!-- Energy Bolt -->
+  <path
+    d="M23 6L13 20H19.5L16.5 34L27.5 18H21L23 6Z"
+    fill="white"
+  />
+</svg>
