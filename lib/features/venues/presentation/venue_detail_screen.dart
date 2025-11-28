@@ -255,7 +255,15 @@ class VenueDetailScreen extends ConsumerWidget {
                         const SizedBox(width: 24),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push(
+                                '/home/venue/${venue.id}/booking',
+                                extra: {
+                                  'venueName': venue.name,
+                                  'pricePerHour': venue.pricePerHour,
+                                },
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryColor,
                               padding: const EdgeInsets.symmetric(vertical: 16),

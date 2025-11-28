@@ -5,16 +5,24 @@ import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/get_started_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/bookings/presentation/booking_screen.dart';
+import '../features/bookings/presentation/slot_selection_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/manager/presentation/manager_bookings_screen.dart';
 import '../features/manager/presentation/manager_home_screen.dart';
+import '../features/manager/presentation/manager_profile_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/venues/presentation/venue_detail_screen.dart';
+import '../shared/widgets/manager_scaffold_with_navbar.dart';
 import '../shared/widgets/scaffold_with_navbar.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
 final _shellNavigatorBookingKey = GlobalKey<NavigatorState>(debugLabel: 'shellBooking');
 final _shellNavigatorProfileKey = GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
+
+final _shellNavigatorManagerHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellManagerHome');
+final _shellNavigatorManagerBookingKey = GlobalKey<NavigatorState>(debugLabel: 'shellManagerBooking');
+final _shellNavigatorManagerProfileKey = GlobalKey<NavigatorState>(debugLabel: 'shellManagerProfile');
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -31,10 +39,42 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
-      GoRoute(
-        path: '/manager-home',
-        builder: (context, state) => const ManagerHomeScreen(),
+      // Manager Shell Route
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ManagerScaffoldWithNavBar(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorManagerHomeKey,
+            routes: [
+              GoRoute(
+                path: '/manager/home',
+                builder: (context, state) => const ManagerHomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorManagerBookingKey,
+            routes: [
+              GoRoute(
+                path: '/manager/bookings',
+                builder: (context, state) => const ManagerBookingsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorManagerProfileKey,
+            routes: [
+              GoRoute(
+                path: '/manager/profile',
+                builder: (context, state) => const ManagerProfileScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
+      // User Shell Route
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -54,6 +94,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                       final id = state.pathParameters['id']!;
                       return VenueDetailScreen(venueId: id);
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'booking',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final id = state.pathParameters['id']!;
+                          final extra = state.extra as Map<String, dynamic>;
+                          return SlotSelectionScreen(
+                            venueId: id,
+                            venueName: extra['venueName'] as String,
+                            pricePerHour: extra['pricePerHour'] as double,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -95,7 +150,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isGetStarted || isLoggingIn) {
           final role = authState.value?.role;
           if (role == 'manager') {
-            return '/manager-home';
+            return '/manager/home';
           }
           return '/home';
         }

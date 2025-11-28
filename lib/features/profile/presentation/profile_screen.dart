@@ -12,11 +12,6 @@ class ProfileScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-      ),
       body: authState.when(
         data: (user) {
           if (user == null) return const Center(child: Text('Not logged in'));

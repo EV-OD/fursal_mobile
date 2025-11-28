@@ -11,29 +11,12 @@ class ManagerHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final venuesAsync = ref.watch(venuesProvider);
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.value?.uid;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          'Manager Dashboard',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            onPressed: () {
-              ref.read(authRepositoryProvider).signOut();
-            },
-          ),
-        ],
-      ),
+      // AppBar is handled by ManagerScaffoldWithNavBar
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // TODO: Navigate to add venue screen
@@ -44,7 +27,10 @@ class ManagerHomeScreen extends ConsumerWidget {
       ),
       body: venuesAsync.when(
         data: (venues) {
-          if (venues.isEmpty) {
+          // Filter venues managed by current user
+          final myVenues = venues.where((v) => v.managedBy == userId).toList();
+
+          if (myVenues.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -67,9 +53,9 @@ class ManagerHomeScreen extends ConsumerWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: venues.length,
+            itemCount: myVenues.length,
             itemBuilder: (context, index) {
-              final venue = venues[index];
+              final venue = myVenues[index];
               return VenueListCard(
                 venue: venue,
                 onTap: () {

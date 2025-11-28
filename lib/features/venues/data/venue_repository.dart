@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/venue.dart';
 import '../domain/review.dart';
+import '../domain/venue_slot.dart';
 
 final venueRepositoryProvider = Provider<VenueRepository>((ref) {
   return VenueRepository(FirebaseFirestore.instance);
@@ -13,6 +14,10 @@ final venuesProvider = StreamProvider<List<Venue>>((ref) {
 
 final venueProvider = StreamProvider.family<Venue?, String>((ref, id) {
   return ref.watch(venueRepositoryProvider).getVenue(id);
+});
+
+final venueSlotsProvider = StreamProvider.family<VenueSlotData?, String>((ref, venueId) {
+  return ref.watch(venueRepositoryProvider).getVenueSlots(venueId);
 });
 
 final venueReviewsProvider = StreamProvider.family<List<Review>, String>((ref, venueId) {
@@ -49,6 +54,13 @@ class VenueRepository {
       return snapshot.docs.map((doc) {
         return Review.fromMap(doc.data(), doc.id);
       }).toList();
+    });
+  }
+
+  Stream<VenueSlotData?> getVenueSlots(String venueId) {
+    return _firestore.collection('venueSlots').doc(venueId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return VenueSlotData.fromMap(doc.data()!, doc.id);
     });
   }
 
