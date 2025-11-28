@@ -1,4 +1,4 @@
-package com.example.fursal_mobile
+package com.example.tournament
 
 import io.flutter.embedding.android.FlutterActivity
 
