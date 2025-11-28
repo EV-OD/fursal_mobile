@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../venues/data/venue_repository.dart';
-import 'widgets/home_header.dart';
-import 'widgets/venue_list_card.dart';
+import '../../../shared/widgets/venue_list_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -12,10 +12,27 @@ class HomeScreen extends ConsumerWidget {
     final venuesAsync = ref.watch(venuesProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       body: CustomScrollView(
         slivers: [
-          const HomeHeader(),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search venues...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                ),
+              ),
+            ),
+          ),
           
           venuesAsync.when(
             data: (venues) {
@@ -42,7 +59,11 @@ class HomeScreen extends ConsumerWidget {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      return VenueListCard(venue: venues[index]);
+                      final venue = venues[index];
+                      return VenueListCard(
+                        venue: venue,
+                        onTap: () => context.go('/home/venue/${venue.id}'),
+                      );
                     },
                     childCount: venues.length,
                   ),

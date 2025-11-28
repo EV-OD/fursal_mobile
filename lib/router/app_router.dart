@@ -6,6 +6,7 @@ import '../features/auth/presentation/get_started_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/bookings/presentation/booking_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/manager/presentation/manager_home_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/venues/presentation/venue_detail_screen.dart';
 import '../shared/widgets/scaffold_with_navbar.dart';
@@ -29,6 +30,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/manager-home',
+        builder: (context, state) => const ManagerHomeScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -88,6 +93,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn) {
         // If logged in and trying to access auth pages, redirect to home
         if (isGetStarted || isLoggingIn) {
+          final role = authState.value?.role;
+          if (role == 'manager') {
+            return '/manager-home';
+          }
           return '/home';
         }
       } else {

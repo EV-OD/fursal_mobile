@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../venues/domain/venue.dart';
-import '../../../../core/theme.dart';
+import '../../features/venues/domain/venue.dart';
+import '../../core/theme.dart';
 
 class VenueListCard extends StatelessWidget {
   final Venue venue;
+  final VoidCallback? onTap;
 
-  const VenueListCard({super.key, required this.venue});
+  const VenueListCard({
+    super.key, 
+    required this.venue,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,7 @@ class VenueListCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => context.go('/home/venue/${venue.id}'),
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +103,6 @@ class VenueListCard extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
@@ -113,19 +116,31 @@ class VenueListCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Rs. ${venue.pricePerHour}/hr',
+                            style: const TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, 
-                          size: 16, 
-                          color: Colors.grey[500]
-                        ),
+                        const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            venue.address ?? 'No address',
+                            venue.address ?? 'No address provided',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 14,
@@ -136,46 +151,14 @@ class VenueListCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Rs. ${venue.pricePerHour.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  color: AppTheme.primaryColor,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '/hr',
-                                style: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Book',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
+                        _buildFeatureChip(Icons.grass, 'Turf'),
+                        const SizedBox(width: 8),
+                        _buildFeatureChip(Icons.local_parking, 'Parking'),
+                        const SizedBox(width: 8),
+                        _buildFeatureChip(Icons.wifi, 'WiFi'),
                       ],
                     ),
                   ],
@@ -184,6 +167,31 @@ class VenueListCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey[600]),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
