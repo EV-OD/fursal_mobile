@@ -102,10 +102,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 Hero(
                   tag: 'logo',
-                  child: SvgPicture.asset(
-                    'assets/logo.svg',
-                    width: 60,
-                    height: 60,
+                  child: Image.asset(
+                    'assets/logo.png',
+                    height: 80,
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 24),
