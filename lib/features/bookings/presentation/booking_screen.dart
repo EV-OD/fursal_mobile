@@ -29,30 +29,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const Scaffold(body: Center(child: Text('Please login to view bookings')));
-    }
-
-    final bookingsAsync = ref.watch(userBookingsProvider(user.uid));
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Bookings')),
-      body: bookingsAsync.when(
-        data: (bookings) {
-          if (bookings.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.calendar_today_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No bookings yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-=======
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Please login to view bookings')));
@@ -89,7 +65,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 _buildBookingSection(context, 'Payment Not Found', _getPaymentPendingBookings(bookings)),
                 _buildBookingSection(context, 'Cancelled & Expired', _getCancelledExpiredBookings(bookings)),
               ],
->>>>>>> d48241cca8b480696e6dc6ab15cd70d88da1ca73
             ),
           );
         },
