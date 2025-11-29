@@ -87,7 +87,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   alignment: Alignment.topRight,
                   child: TextButton(
                     onPressed: () => context.push('/login'),
-                    child: Text(
+                    child: const Text(
                       'Skip',
                       style: TextStyle(
                         color: AppTheme.textSecondary,

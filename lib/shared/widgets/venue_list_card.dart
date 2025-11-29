@@ -135,7 +135,7 @@ class VenueListCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 16, color: AppTheme.textSecondary),
+                        const Icon(Icons.location_on_outlined, size: 16, color: AppTheme.textSecondary),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(

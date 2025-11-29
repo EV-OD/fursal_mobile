@@ -294,7 +294,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
       ],
     );

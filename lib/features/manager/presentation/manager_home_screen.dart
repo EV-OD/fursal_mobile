@@ -38,7 +38,7 @@ class ManagerHomeScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.store_mall_directory_outlined, size: 64, color: AppTheme.textSecondary),
+                  const Icon(Icons.store_mall_directory_outlined, size: 64, color: AppTheme.textSecondary),
                   const SizedBox(height: 16),
                   Text(
                     'No venues managed yet',
