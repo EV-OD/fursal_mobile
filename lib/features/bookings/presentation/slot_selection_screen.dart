@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme.dart';
 import '../../venues/data/venue_repository.dart';
 import '../../venues/domain/venue_slot.dart';
+import '../domain/booking.dart';
+import '../data/booking_repository.dart';
+import 'payment_screen.dart';
 
 class SlotSelectionScreen extends ConsumerStatefulWidget {
   final String venueId;
@@ -56,7 +62,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
               Expanded(
                 child: _buildSlotsGrid(venueSlots, theme),
               ),
-              _buildBottomBar(theme),
+              _buildBottomBar(theme, venueSlots.config),
             ],
           );
         },
@@ -300,7 +306,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
     );
   }
 
-  Widget _buildBottomBar(ThemeData theme) {
+  Widget _buildBottomBar(ThemeData theme, VenueConfig config) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -337,11 +343,71 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: _selectedSlotTime != null
-                    ? () {
-                        // TODO: Proceed to payment/confirmation
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Booking $_selectedSlotTime on ${DateFormat('yyyy-MM-dd').format(_selectedDate)}')),
-                        );
+                    ? () async {
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please login to continue')),
+                          );
+                          return;
+                        }
+
+                        try {
+                          final bookingId = const Uuid().v4();
+                          final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+                          
+                          // Calculate end time
+                          final startParts = _selectedSlotTime!.split(':');
+                          final startHour = int.parse(startParts[0]);
+                          final startMinute = int.parse(startParts[1]);
+                          final startTime = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, startHour, startMinute);
+                          final endTime = startTime.add(Duration(minutes: config.slotDuration));
+                          final endTimeStr = DateFormat('HH:mm').format(endTime);
+
+                          // 1. Hold the slot
+                          final heldSlot = HeldSlot(
+                            date: dateStr,
+                            startTime: _selectedSlotTime!,
+                            userId: user.uid,
+                            holdExpiresAt: Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
+                            bookingId: bookingId,
+                            createdAt: Timestamp.now(),
+                          );
+                          
+                          await ref.read(venueRepositoryProvider).holdSlot(widget.venueId, heldSlot);
+
+                          // 2. Create pending booking
+                          final booking = Booking(
+                            id: bookingId,
+                            venueId: widget.venueId,
+                            venueName: widget.venueName,
+                            userId: user.uid,
+                            date: dateStr,
+                            startTime: _selectedSlotTime!,
+                            endTime: endTimeStr,
+                            amount: widget.pricePerHour,
+                            status: 'pending',
+                            paymentStatus: 'pending',
+                            createdAt: Timestamp.now(),
+                            holdExpiresAt: Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
+                          );
+
+                          await ref.read(bookingRepositoryProvider).createBooking(booking);
+
+                          if (mounted) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => PaymentScreen(booking: booking),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to proceed: $e')),
+                            );
+                          }
+                        }
                       }
                     : null,
                 style: ElevatedButton.styleFrom(

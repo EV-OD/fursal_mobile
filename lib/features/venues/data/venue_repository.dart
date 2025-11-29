@@ -72,4 +72,55 @@ class VenueRepository {
     final docId = '${review.venueId}_${review.userId}';
     await _firestore.collection('reviews').doc(docId).set(review.toMap());
   }
+
+  Future<void> holdSlot(String venueId, HeldSlot heldSlot) async {
+    final docRef = _firestore.collection('venueSlots').doc(venueId);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) {
+        throw Exception("Venue slots not found");
+      }
+
+      final data = VenueSlotData.fromMap(snapshot.data()!, snapshot.id);
+
+      // Check if slot is already booked or blocked
+      bool isBooked = data.bookings.any((b) =>
+          b.date == heldSlot.date &&
+          b.startTime == heldSlot.startTime &&
+          b.status != 'cancelled');
+
+      bool isBlocked = data.blocked.any((b) =>
+          b.date == heldSlot.date &&
+          b.startTime == heldSlot.startTime);
+
+      bool isHeld = data.held.any((h) =>
+          h.date == heldSlot.date &&
+          h.startTime == heldSlot.startTime &&
+          h.holdExpiresAt.toDate().isAfter(DateTime.now()));
+
+      if (isBooked || isBlocked || isHeld) {
+        throw Exception("Slot is no longer available");
+      }
+
+      List<HeldSlot> currentHeld = List.from(data.held);
+      // Remove expired holds for this slot if any (though isHeld check handles valid ones)
+      currentHeld.removeWhere((h) =>
+          h.date == heldSlot.date &&
+          h.startTime == heldSlot.startTime);
+
+      currentHeld.add(heldSlot);
+
+      transaction.update(docRef, {
+        'held': currentHeld.map((e) => {
+          'date': e.date,
+          'startTime': e.startTime,
+          'userId': e.userId,
+          'holdExpiresAt': e.holdExpiresAt,
+          'bookingId': e.bookingId,
+          'createdAt': e.createdAt,
+        }).toList(),
+      });
+    });
+  }
 }

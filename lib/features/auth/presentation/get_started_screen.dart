@@ -13,25 +13,55 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingItem> _items = [
-    OnboardingItem(
-      title: 'Find Perfect Courts',
-      description:
-          'Discover the best futsal courts near you with just a few taps.',
-      icon: Icons.location_on_outlined,
-    ),
-    OnboardingItem(
-      title: 'Book Instantly',
-      description:
-          'Secure your spot in seconds. No more phone calls or waiting.',
-      icon: Icons.calendar_today_outlined,
-    ),
-    OnboardingItem(
-      title: 'Play & Compete',
-      description: 'Join the community, challenge teams, and enjoy the game.',
-      icon: Icons.sports_soccer_outlined,
-    ),
-  ];
+  late List<OnboardingItem> _items;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _items = [
+      OnboardingItem(
+        title: 'Find Perfect Courts',
+        description: 'Discover the best futsal courts near you with just a few taps.',
+        visual: _buildLocationVisual(),
+      ),
+      OnboardingItem(
+        title: 'Book Instantly',
+        description: 'Secure your spot in seconds. No more phone calls or waiting.',
+        visual: _buildBookingVisual(),
+      ),
+      OnboardingItem(
+        title: 'Play & Compete',
+        description: 'Join the community, challenge teams, and enjoy the game.',
+        visual: _buildCommunityVisual(),
+      ),
+    ];
+  }
+
+
+  late List<OnboardingItem> _items;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _items = [
+      OnboardingItem(
+        title: 'Find Perfect Courts',
+        description: 'Discover the best futsal courts near you with just a few taps.',
+        visual: _buildLocationVisual(),
+      ),
+      OnboardingItem(
+        title: 'Book Instantly',
+        description: 'Secure your spot in seconds. No more phone calls or waiting.',
+        visual: _buildBookingVisual(),
+      ),
+      OnboardingItem(
+        title: 'Play & Compete',
+        description: 'Join the community, challenge teams, and enjoy the game.',
+        visual: _buildCommunityVisual(),
+      ),
+    ];
+  }
+>>>>>>> d48241cca8b480696e6dc6ab15cd70d88da1ca73
 
   @override
   Widget build(BuildContext context) {
@@ -114,48 +144,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Logo or Illustration with Layered Effect
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Container(
-                                  width: 160,
-                                  height: 160,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: theme.primaryColor.withOpacity(0.05),
-                                  ),
-                                ),
-                                Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: theme.primaryColor.withOpacity(0.1),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            theme.primaryColor.withOpacity(0.1),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    _items[index].icon,
-                                    size: 48,
-                                    color: theme.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // Logo or Illustration with layered visuals
+                            _items[index].visual,
                             const SizedBox(height: 48),
                             Text(
                               _items[index].title,
@@ -252,59 +242,133 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     );
   }
 
-  Widget _buildPage(OnboardingItem item) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildLocationVisual() {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 200,
+      width: 200,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.05),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Icon(
-              item.icon,
-              size: 80,
-              color: AppTheme.primaryColor,
-            ),
+          Icon(Icons.map_outlined, size: 180, color: theme.primaryColor.withOpacity(0.1)),
+          Positioned(
+            top: 40,
+            right: 40,
+            child: Icon(Icons.location_on, size: 60, color: theme.primaryColor),
           ),
-          const SizedBox(height: 40),
-          Text(
-            item.title,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          Positioned(
+            bottom: 40,
+            left: 40,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Icon(Icons.search, size: 30, color: theme.colorScheme.secondary),
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            item.description,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
+
+  Widget _buildBookingVisual() {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 200,
+      width: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(Icons.calendar_today, size: 160, color: theme.primaryColor.withOpacity(0.1)),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.primaryColor.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, size: 50, color: Colors.green),
+                const SizedBox(height: 8),
+                Text(
+                  "Booked!",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommunityVisual() {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 200,
+      width: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 20,
+            top: 20,
+            child: Icon(Icons.sports_soccer, size: 80, color: theme.primaryColor.withOpacity(0.2)),
+          ),
+          Positioned(
+            right: 20,
+            bottom: 20,
+            child: Icon(Icons.emoji_events, size: 80, color: theme.colorScheme.secondary.withOpacity(0.2)),
+          ),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: theme.primaryColor, width: 2),
+              ),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: theme.primaryColor.withOpacity(0.1),
+                child: Icon(Icons.groups, size: 40, color: theme.primaryColor),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 }
 
 class OnboardingItem {
   final String title;
   final String description;
-  final IconData icon;
+  final Widget visual;
 
   OnboardingItem({
     required this.title,
     required this.description,
-    required this.icon,
+    required this.visual,
   });
 }

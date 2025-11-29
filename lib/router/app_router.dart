@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/get_started_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/splash_screen.dart';
 import '../features/bookings/presentation/booking_screen.dart';
 import '../features/bookings/presentation/slot_selection_screen.dart';
 import '../features/home/presentation/home_screen.dart';
@@ -42,6 +43,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/get-started',
         builder: (context, state) => const GetStartedScreen(),
       ),
       GoRoute(
@@ -158,15 +163,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.isLoading;
       final hasError = authState.hasError;
       final isLoggedIn = authState.valueOrNull != null;
-
+      final isSplash = state.uri.toString() == '/';
+      final isGetStarted = state.uri.toString() == '/get-started';
       final isLoggingIn = state.uri.toString() == '/login';
-      final isGetStarted = state.uri.toString() == '/';
 
       if (isLoading || hasError) return null;
 
       if (isLoggedIn) {
-        // If logged in and trying to access auth pages, redirect to home
-        if (isGetStarted || isLoggingIn) {
+        // If logged in and trying to access auth pages or splash, redirect to home
+        if (isSplash || isGetStarted || isLoggingIn) {
           final role = authState.value?.role;
           if (role == 'manager') {
             return '/manager/home';
@@ -174,9 +179,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/home';
         }
       } else {
-        // If not logged in and trying to access protected pages, redirect to get started
+        // If not logged in
+        if (isSplash) {
+          return '/get-started';
+        }
+
+        // If trying to access protected pages, redirect to get started
         if (!isGetStarted && !isLoggingIn) {
-          return '/';
+          return '/get-started';
         }
       }
 
