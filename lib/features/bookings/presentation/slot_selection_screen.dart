@@ -9,7 +9,8 @@ import '../../../core/theme.dart';
 import '../../venues/data/venue_repository.dart';
 import '../../venues/domain/venue_slot.dart';
 import '../domain/booking.dart';
-import '../data/booking_repository.dart';
+// booking_repository import removed; backend now handles booking persistence
+import '../../../services/booking_service.dart';
 import 'payment_screen.dart';
 
 class SlotSelectionScreen extends ConsumerStatefulWidget {
@@ -353,7 +354,6 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                         }
 
                         try {
-                          final bookingId = const Uuid().v4();
                           final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
                           
                           // Calculate end time
@@ -364,19 +364,19 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                           final endTime = startTime.add(Duration(minutes: config.slotDuration));
                           final endTimeStr = DateFormat('HH:mm').format(endTime);
 
-                          // 1. Hold the slot
-                          final heldSlot = HeldSlot(
+                          // Create booking via backend API (server will check slot availability atomically)
+                          final resp = await BookingService().createBookingViaApi(
+                            venueId: widget.venueId,
                             date: dateStr,
                             startTime: _selectedSlotTime!,
-                            userId: user.uid,
-                            holdExpiresAt: Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
-                            bookingId: bookingId,
-                            createdAt: Timestamp.now(),
+                            endTime: endTimeStr,
+                            amount: widget.pricePerHour,
+                            metadata: null,
                           );
-                          
-                          await ref.read(venueRepositoryProvider).holdSlot(widget.venueId, heldSlot);
 
-                          // 2. Create pending booking
+                          final bookingId = resp['bookingId'] ?? resp['id'] ?? const Uuid().v4();
+
+                          // Construct local booking model for UI navigation
                           final booking = Booking(
                             id: bookingId,
                             venueId: widget.venueId,
@@ -387,12 +387,9 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                             endTime: endTimeStr,
                             amount: widget.pricePerHour,
                             status: 'pending',
-                            // paymentStatus is computed from esewaStatus on Booking
                             createdAt: Timestamp.now(),
                             holdExpiresAt: Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
                           );
-
-                          await ref.read(bookingRepositoryProvider).createBooking(booking);
 
                           if (mounted) {
                             Navigator.of(context).push(

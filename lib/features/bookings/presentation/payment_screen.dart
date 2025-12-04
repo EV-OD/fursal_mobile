@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:esewa_flutter/esewa_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../domain/booking.dart';
-import '../data/booking_repository.dart';
+// booking_repository import removed — backend now handles final verification
+import '../../../services/payment_service.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final Booking booking;
@@ -75,26 +76,70 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final result = await Esewa.i.init(
-        context: context,
-        eSewaConfig: ESewaConfig.dev(
-          amount: widget.booking.amount,
-          productCode: dotenv.env['ESEWA_CLIENT_ID'] ?? 'EPAYTEST',
-          secretKey: dotenv.env['ESEWA_SECRET_KEY'] ?? '8gBm/:&EnhH.1/q',
-          transactionUuid: widget.booking.id,
-          successUrl: "https://example.com/success",
-          failureUrl: "https://example.com/failure",
-        ),
+      // Step 1: Call backend to initiate payment and get client-side params.
+      final paymentService = PaymentService();
+      final resp = await paymentService.initiatePayment(
+        bookingId: widget.booking.id,
+        totalAmount: widget.booking.amount,
       );
 
-      if (result.hasData) {
-        debugPrint(":::SUCCESS::: => ${result.data}");
-        _verifyTransaction(result.data!);
+      // Backend may return either a pre-built payment URL (web flow) or an `esewa` object
+      // containing the params needed for the eSewa SDK. Handle both.
+      if (resp.containsKey('paymentUrl')) {
+        final String url = resp['paymentUrl'] as String;
+        final String? successUrl = resp['successUrl'] as String?;
+        final String? failureUrl = resp['failureUrl'] as String?;
+        await _openWebPayment(url, successUrl: successUrl, failureUrl: failureUrl);
+      
+      } else if (resp.containsKey('esewa')) {
+        final esewa = resp['esewa'] as Map<String, dynamic>;
+        final amount = esewa['amount'] ?? widget.booking.amount;
+        final productCode = esewa['productCode'] ?? dotenv.env['ESEWA_CLIENT_ID'] ?? 'EPAYTEST';
+        final secretKey = esewa['secretKey'] ?? dotenv.env['ESEWA_SECRET_KEY'] ?? '';
+        final transactionUuid = esewa['transactionUuid'] ?? resp['transactionUuid'] ?? widget.booking.id;
+        final successUrl = esewa['successUrl'] ?? 'https://example.com/success';
+        final failureUrl = esewa['failureUrl'] ?? 'https://example.com/failure';
+
+        final result = await Esewa.i.init(
+          context: context,
+          eSewaConfig: ESewaConfig.dev(
+            amount: amount,
+            productCode: productCode,
+            secretKey: secretKey,
+            transactionUuid: transactionUuid,
+            successUrl: successUrl,
+            failureUrl: failureUrl,
+          ),
+        );
+
+        if (result.hasData) {
+          await _handleEsewaResult(result.data!);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Payment Failed: ${result.error}")));
+          setState(() => _isProcessing = false);
+        }
       } else {
-        debugPrint(":::FAILURE::: => ${result.error}");
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Payment Failed: ${result.error}")));
-        setState(() => _isProcessing = false);
+        // Unexpected shape — fallback to previous client-side flow
+        final result = await Esewa.i.init(
+          context: context,
+          eSewaConfig: ESewaConfig.dev(
+            amount: widget.booking.amount,
+            productCode: dotenv.env['ESEWA_CLIENT_ID'] ?? 'EPAYTEST',
+            secretKey: dotenv.env['ESEWA_SECRET_KEY'] ?? '8gBm/:&EnhH.1/q',
+            transactionUuid: widget.booking.id,
+            successUrl: "https://example.com/success",
+            failureUrl: "https://example.com/failure",
+          ),
+        );
+
+        if (result.hasData) {
+          await _handleEsewaResult(result.data!);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Payment Failed: ${result.error}")));
+          setState(() => _isProcessing = false);
+        }
       }
     } on Exception catch (e) {
       debugPrint("EXCEPTION : ${e.toString()}");
@@ -104,43 +149,31 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     }
   }
 
-  Future<void> _verifyTransaction(EsewaPaymentResponse response) async {
+  Future<void> _handleEsewaResult(EsewaPaymentResponse response) async {
+    // Send the returned response to backend for verification and to update booking atomically.
     try {
-      // In a real app, verify with backend using response.data (base64 encoded)
-      // For now, we assume success and update Firestore
-      debugPrint("Payment Response Data: ${response.data}");
+      final paymentService = PaymentService();
+      final txnUuid = widget.booking.id; // prefer server-provided txnUuid if available earlier
+      final resp = await paymentService.verifyPayment(
+        transactionUuid: txnUuid,
+        responseData: response.data ?? '',
+      );
 
-      // Extract refId from response if available
-      // Note: EsewaPaymentResponse might not expose refId directly depending on version,
-      // but usually it's in the decoded data. For now we use a placeholder or try to get it.
-      // The response.data is a base64 encoded string containing transaction details.
-      // We will use the booking ID (transactionUuid) as the payment ID reference for now
-      // as extracting the specific eSewa refId requires decoding the response.data.
+      // Backend should return a status; consider 'success' key or booking info.
+      final success = resp['success'] == true || resp['status'] == 'success';
 
-      final now = DateTime.now();
-      final esewaData = {
-        'bookingType': 'mobile',
-        'esewaAmount': widget.booking.amount,
-        'esewaInitiatedAt': Timestamp.fromDate(now), // Approximate
-        'esewaStatus': 'COMPLETE',
-        'esewaTransactionCode':
-            widget.booking.id, // Using booking ID as transaction code for now
-        'esewaTransactionUuid': widget.booking.id,
-        'paymentTimestamp': Timestamp.fromDate(now),
-        'verifiedAt': Timestamp.fromDate(now),
-      };
-
-      await ref.read(bookingRepositoryProvider).updateBookingStatus(
-            widget.booking.id,
-            'booked',
-            booking: widget.booking,
-            esewaData: esewaData,
-          );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Payment Successful! Booking Confirmed.")));
-        Navigator.of(context).popUntil((route) => route.isFirst);
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Payment Successful! Booking Confirmed.")));
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } else {
+        final message = resp['message'] ?? 'Verification failed';
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Verification failed: $message')));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -148,9 +181,58 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             .showSnackBar(SnackBar(content: Text("Verification Failed: $e")));
       }
     } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
+
+  Future<void> _openWebPayment(String url,
+      {String? successUrl, String? failureUrl}) async {
+    setState(() => _isProcessing = true);
+    final paymentService = PaymentService();
+
+    await Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Complete Payment')),
+        body: InAppWebView(
+          initialUrlRequest: URLRequest(url: WebUri(url)),
+          onLoadStop: (controller, uri) async {
+            if (uri == null) return;
+            final current = uri.toString();
+            if (successUrl != null && current.startsWith(successUrl)) {
+              // Close webview and verify with backend
+              Navigator.of(context).pop();
+              try {
+                await paymentService.verifyPayment(
+                    transactionUuid: widget.booking.id, responseData: 'redirect');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Payment Successful! Booking Confirmed.')));
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Verification Failed: $e')));
+                }
+              } finally {
+                if (mounted) setState(() => _isProcessing = false);
+              }
+            }
+            if (failureUrl != null && current.startsWith(failureUrl)) {
+              Navigator.of(context).pop();
+              if (mounted) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(const SnackBar(content: Text('Payment Failed')));
+                setState(() => _isProcessing = false);
+              }
+            }
+          },
+        ),
+      );
+    }));
+
+    if (mounted) setState(() => _isProcessing = false);
+  }
+
+  // _verifyTransaction removed; verification now performed via backend in `_handleEsewaResult`.
 }

@@ -36,6 +36,7 @@ dependencies:
   device_info_plus: ^11.3.0
   image_picker: ^1.2.1
   firebase_storage: ^13.0.4
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
