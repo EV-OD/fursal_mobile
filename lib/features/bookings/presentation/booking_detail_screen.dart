@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +7,6 @@ import 'package:crypto/crypto.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 import '../domain/booking.dart';
-import '../data/booking_repository.dart';
 import 'payment_screen.dart';
 import 'invoice_preview_screen.dart';
 
@@ -18,7 +16,8 @@ class BookingDetailScreen extends ConsumerStatefulWidget {
   const BookingDetailScreen({super.key, required this.booking});
 
   @override
-  ConsumerState<BookingDetailScreen> createState() => _BookingDetailScreenState();
+  ConsumerState<BookingDetailScreen> createState() =>
+      _BookingDetailScreenState();
 }
 
 class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
@@ -27,8 +26,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final booking = widget.booking;
-    final isExpired = booking.status == 'pending' && 
-        booking.holdExpiresAt != null && 
+    final isExpired = booking.status == 'pending' &&
+        booking.holdExpiresAt != null &&
         booking.holdExpiresAt!.toDate().isBefore(DateTime.now());
 
     final canPay = booking.status == 'pending' && !isExpired;
@@ -40,8 +39,9 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     } catch (_) {
       endDateTime = DateTime.now();
     }
-    final isCompleted = (booking.status == 'booked' || booking.status == 'confirmed') && 
-        endDateTime.isBefore(DateTime.now());
+    final isCompleted =
+        (booking.status == 'booked' || booking.status == 'confirmed') &&
+            endDateTime.isBefore(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(title: const Text('Booking Details')),
@@ -54,21 +54,24 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             const SizedBox(height: 24),
             _buildDetailCard(context, booking),
             const SizedBox(height: 24),
-            if ((booking.status == 'confirmed' || booking.status == 'booked') && !isCompleted && booking.paymentStatus == 'paid') ...[
+            if ((booking.status == 'confirmed' || booking.status == 'booked') &&
+                !isCompleted &&
+                booking.paymentStatus == 'paid') ...[
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _isGeneratingInvoice 
-                      ? null 
+                  onPressed: _isGeneratingInvoice
+                      ? null
                       : () => _generateAndDownloadInvoice(context, booking),
-                  icon: _isGeneratingInvoice 
+                  icon: _isGeneratingInvoice
                       ? const SizedBox(
-                          width: 24, 
-                          height: 24, 
-                          child: CircularProgressIndicator(strokeWidth: 2)
-                        )
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.picture_as_pdf),
-                  label: Text(_isGeneratingInvoice ? 'Generating...' : 'Download Invoice'),
+                  label: Text(_isGeneratingInvoice
+                      ? 'Generating...'
+                      : 'Download Invoice'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -89,7 +92,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Pay Now', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: const Text('Pay Now',
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -100,7 +104,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Verify Payment', style: TextStyle(fontSize: 18)),
+                  child: const Text('Verify Payment',
+                      style: TextStyle(fontSize: 18)),
                 ),
               ),
             ],
@@ -110,7 +115,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     );
   }
 
-  Widget _buildStatusBanner(BuildContext context, Booking booking, bool isExpired, bool isCompleted) {
+  Widget _buildStatusBanner(
+      BuildContext context, Booking booking, bool isExpired, bool isCompleted) {
     Color color;
     String text;
     IconData icon;
@@ -119,7 +125,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
       color = Colors.blue;
       text = 'Booking Completed';
       icon = Icons.task_alt;
-    } else if ((booking.status == 'confirmed' || booking.status == 'booked') && booking.paymentStatus == 'paid') {
+    } else if ((booking.status == 'confirmed' || booking.status == 'booked') &&
+        booking.paymentStatus == 'paid') {
       color = Colors.green;
       text = 'Booking Confirmed';
       icon = Icons.check_circle;
@@ -170,14 +177,18 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(booking.venueName, style: Theme.of(context).textTheme.headlineSmall),
+            Text(booking.venueName,
+                style: Theme.of(context).textTheme.headlineSmall),
             const Divider(height: 32),
             _buildRow('Date', booking.date),
             _buildRow('Time', '${booking.startTime} - ${booking.endTime}'),
             _buildRow('Amount', 'Rs. ${booking.amount}'),
             _buildRow('Booking ID', booking.id),
             if (booking.holdExpiresAt != null && booking.status == 'pending')
-              _buildRow('Expires At', DateFormat('HH:mm:ss').format(booking.holdExpiresAt!.toDate())),
+              _buildRow(
+                  'Expires At',
+                  DateFormat('HH:mm:ss')
+                      .format(booking.holdExpiresAt!.toDate())),
           ],
         ),
       ),
@@ -205,14 +216,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     );
   }
 
-  Future<void> _generateAndDownloadInvoice(BuildContext context, Booking booking) async {
+  Future<void> _generateAndDownloadInvoice(
+      BuildContext context, Booking booking) async {
     setState(() {
       _isGeneratingInvoice = true;
     });
 
     try {
       // Load logo
-      final logoBytes = (await rootBundle.load('assets/logo.png')).buffer.asUint8List();
+      final logoBytes =
+          (await rootBundle.load('assets/logo.png')).buffer.asUint8List();
 
       // Prepare invoice data
       final invoiceData = InvoiceData(
@@ -238,7 +251,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         setState(() {
           _isGeneratingInvoice = false;
         });
-        
+
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => InvoicePreviewScreen(
@@ -253,7 +266,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         setState(() {
           _isGeneratingInvoice = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error generating invoice: $e'),
@@ -271,7 +284,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Verify Payment'),
-        content: const Text('If you have completed the payment but the status is not updated, please click "Check Status". This will attempt to verify the transaction.'),
+        content: const Text(
+            'If you have completed the payment but the status is not updated, please click "Check Status". This will attempt to verify the transaction.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -284,15 +298,17 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Checking payment status...')),
               );
-              
+
               // Here we would call the repository to check status
               // For now, we just reload the booking or show a message
               // If we had the transaction ID, we could check it.
-              
+
               await Future.delayed(const Duration(seconds: 2));
               if (context.mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment verification pending. Please contact support if issue persists.')),
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text(
+                          'Payment verification pending. Please contact support if issue persists.')),
                 );
               }
             },
@@ -370,15 +386,18 @@ Future<Uint8List> generateInvoicePdf(InvoiceData data) async {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('INVOICE', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
-                    pw.Text('SajiloKhel', style: const pw.TextStyle(fontSize: 20)),
+                    pw.Text('INVOICE',
+                        style: pw.TextStyle(
+                            fontSize: 40, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('SajiloKhel',
+                        style: const pw.TextStyle(fontSize: 20)),
                   ],
                 ),
                 pw.Image(logoImage, width: 80, height: 80),
               ],
             ),
             pw.SizedBox(height: 40),
-            
+
             // Invoice Details (Top Right)
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.end,
@@ -398,13 +417,16 @@ Future<Uint8List> generateInvoicePdf(InvoiceData data) async {
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('Billed To:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text('Billed To:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 pw.Text('User ID: ${data.userId}'),
               ],
             ),
-            
+
             pw.SizedBox(height: 40),
-            pw.Text('Booking Details', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.Text('Booking Details',
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.Divider(),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -441,8 +463,12 @@ Future<Uint8List> generateInvoicePdf(InvoiceData data) async {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Total Amount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
-                pw.Text('Rs. ${data.amount}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                pw.Text('Total Amount',
+                    style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                pw.Text('Rs. ${data.amount}',
+                    style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold, fontSize: 16)),
               ],
             ),
             pw.SizedBox(height: 40),

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Venue {
   final String id;
   final String name;
@@ -30,6 +32,13 @@ class Venue {
   });
 
   factory Venue.fromMap(Map<String, dynamic> map, String id) {
+    String createdAtStr = '';
+    if (map['createdAt'] is Timestamp) {
+      createdAtStr = (map['createdAt'] as Timestamp).toDate().toIso8601String();
+    } else if (map['createdAt'] is String) {
+      createdAtStr = map['createdAt'];
+    }
+
     return Venue(
       id: id,
       name: map['name'] ?? '',
@@ -40,7 +49,7 @@ class Venue {
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
       pricePerHour: (map['pricePerHour'] ?? 0.0).toDouble(),
       attributes: Map<String, String>.from(map['attributes'] ?? {}),
-      createdAt: map['createdAt'] ?? '',
+      createdAt: createdAtStr,
       managedBy: map['managedBy'] ?? '',
       averageRating: (map['averageRating'] ?? 0.0).toDouble(),
       reviewCount: (map['reviewCount'] ?? 0).toInt(),

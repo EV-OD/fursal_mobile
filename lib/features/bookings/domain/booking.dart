@@ -10,6 +10,8 @@ class Booking {
   final String endTime;
   final double amount;
   final String status; // 'pending', 'confirmed', 'cancelled', 'completed'
+  final Timestamp createdAt;
+  final Timestamp? holdExpiresAt;
   final String? bookingType;
   final double? esewaAmount;
   final Timestamp? esewaInitiatedAt;

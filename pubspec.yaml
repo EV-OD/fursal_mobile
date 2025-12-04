@@ -19,8 +19,11 @@ dependencies:
   flutter_svg: ^2.1.0
   flutter_dotenv: ^5.1.0
   intl: ^0.20.2
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  geolocator: ^14.0.2
   uuid: ^4.2.1
-  esewa_flutter: 3.0.1 
+  esewa_flutter: 3.0.1
   flutter_inappwebview: ^6.1.5
   crypto: ^3.0.6
   pdf: ^3.11.3
@@ -31,6 +34,8 @@ dependencies:
   open_filex: ^4.7.0
   flutter_local_notifications: ^19.5.0
   device_info_plus: ^11.3.0
+  image_picker: ^1.2.1
+  firebase_storage: ^13.0.4
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 
@@ -22,12 +21,14 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     _items = [
       OnboardingItem(
         title: 'Find Perfect Courts',
-        description: 'Discover the best futsal courts near you with just a few taps.',
+        description:
+            'Discover the best futsal courts near you with just a few taps.',
         visual: _buildLocationVisual(),
       ),
       OnboardingItem(
         title: 'Book Instantly',
-        description: 'Secure your spot in seconds. No more phone calls or waiting.',
+        description:
+            'Secure your spot in seconds. No more phone calls or waiting.',
         visual: _buildBookingVisual(),
       ),
       OnboardingItem(
@@ -41,7 +42,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
@@ -93,7 +94,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   alignment: Alignment.topRight,
                   child: TextButton(
                     onPressed: () => context.push('/login'),
-                    child: Text(
+                    child: const Text(
                       'Skip',
                       style: TextStyle(
                         color: AppTheme.textSecondary,
@@ -102,7 +103,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                     ),
                   ),
                 ),
-                
+
                 Expanded(
                   flex: 3,
                   child: PageView.builder(
@@ -119,7 +120,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Logo or Illustration with Layered Effect
+                            // Logo or Illustration with layered visuals
                             _items[index].visual,
                             const SizedBox(height: 48),
                             Text(
@@ -225,7 +226,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(Icons.map_outlined, size: 180, color: theme.primaryColor.withOpacity(0.1)),
+          Icon(Icons.map_outlined,
+              size: 180, color: theme.primaryColor.withOpacity(0.1)),
           Positioned(
             top: 40,
             right: 40,
@@ -246,7 +248,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   ),
                 ],
               ),
-              child: Icon(Icons.search, size: 30, color: theme.colorScheme.secondary),
+              child: Icon(Icons.search,
+                  size: 30, color: theme.colorScheme.secondary),
             ),
           ),
         ],
@@ -262,7 +265,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(Icons.calendar_today, size: 160, color: theme.primaryColor.withOpacity(0.1)),
+          Icon(Icons.calendar_today,
+              size: 160, color: theme.primaryColor.withOpacity(0.1)),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -279,7 +283,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, size: 50, color: Colors.green),
+                const Icon(Icons.check_circle, size: 50, color: Colors.green),
                 const SizedBox(height: 8),
                 Text(
                   "Booked!",
@@ -307,12 +311,14 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
           Positioned(
             left: 20,
             top: 20,
-            child: Icon(Icons.sports_soccer, size: 80, color: theme.primaryColor.withOpacity(0.2)),
+            child: Icon(Icons.sports_soccer,
+                size: 80, color: theme.primaryColor.withOpacity(0.2)),
           ),
           Positioned(
             right: 20,
             bottom: 20,
-            child: Icon(Icons.emoji_events, size: 80, color: theme.colorScheme.secondary.withOpacity(0.2)),
+            child: Icon(Icons.emoji_events,
+                size: 80, color: theme.colorScheme.secondary.withOpacity(0.2)),
           ),
           Center(
             child: Container(
@@ -332,8 +338,6 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       ),
     );
   }
-
-
 }
 
 class OnboardingItem {

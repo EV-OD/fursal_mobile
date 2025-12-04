@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../core/theme.dart';
 import '../data/booking_repository.dart';
 import '../domain/booking.dart';
 import 'payment_screen.dart';
@@ -31,7 +30,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Scaffold(body: Center(child: Text('Please login to view bookings')));
+      return const Scaffold(
+          body: Center(child: Text('Please login to view bookings')));
     }
 
     final bookingsAsync = ref.watch(userBookingsProvider(user.uid));
@@ -45,7 +45,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.calendar_today_outlined, size: 64, color: Colors.grey),
+                  Icon(Icons.calendar_today_outlined,
+                      size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
                     'No bookings yet',
@@ -60,10 +61,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBookingSection(context, 'Upcoming Bookings', _getUpcomingBookings(bookings)),
-                _buildBookingSection(context, 'Completed', _getCompletedBookings(bookings)),
-                _buildBookingSection(context, 'Payment Not Found', _getPaymentPendingBookings(bookings)),
-                _buildBookingSection(context, 'Cancelled & Expired', _getCancelledExpiredBookings(bookings)),
+                _buildBookingSection(context, 'Upcoming Bookings',
+                    _getUpcomingBookings(bookings)),
+                _buildBookingSection(
+                    context, 'Completed', _getCompletedBookings(bookings)),
+                _buildBookingSection(context, 'Payment Not Found',
+                    _getPaymentPendingBookings(bookings)),
+                _buildBookingSection(context, 'Cancelled & Expired',
+                    _getCancelledExpiredBookings(bookings)),
               ],
             ),
           );
@@ -97,7 +102,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     return bookings.where((b) {
       final endDateTime = _parseDateTime(b.date, b.endTime);
       final isPending = b.status == 'pending';
-      final isHoldValid = b.holdExpiresAt == null || b.holdExpiresAt!.toDate().isAfter(now);
+      final isHoldValid =
+          b.holdExpiresAt == null || b.holdExpiresAt!.toDate().isAfter(now);
       // It is pending payment if status is pending, hold is valid (or null), AND slot hasn't passed
       return isPending && isHoldValid && endDateTime.isAfter(now);
     }).toList();
@@ -109,11 +115,12 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       final endDateTime = _parseDateTime(b.date, b.endTime);
       final isCancelled = b.status == 'cancelled';
       final isExplicitlyExpired = b.status == 'expired';
-      
-      final isPendingButExpired = b.status == 'pending' && (
-        (b.holdExpiresAt != null && b.holdExpiresAt!.toDate().isBefore(now)) ||
-        endDateTime.isBefore(now) // Slot passed but still pending
-      );
+
+      final isPendingButExpired = b.status == 'pending' &&
+          ((b.holdExpiresAt != null &&
+                  b.holdExpiresAt!.toDate().isBefore(now)) ||
+              endDateTime.isBefore(now) // Slot passed but still pending
+          );
 
       return isCancelled || isExplicitlyExpired || isPendingButExpired;
     }).toList();
@@ -127,7 +134,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     }
   }
 
-  Widget _buildBookingSection(BuildContext context, String title, List<Booking> bookings) {
+  Widget _buildBookingSection(
+      BuildContext context, String title, List<Booking> bookings) {
     if (bookings.isEmpty) return const SizedBox.shrink();
 
     return Theme(
@@ -137,19 +145,23 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         title: Text(
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
-          ),
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
         ),
         children: bookings.map((booking) {
-          final isExpired = booking.status == 'expired' || (booking.status == 'pending' && 
-              booking.holdExpiresAt != null && 
-              booking.holdExpiresAt!.toDate().isBefore(DateTime.now()));
-          
+          final isExpired = booking.status == 'expired' ||
+              (booking.status == 'pending' &&
+                  booking.holdExpiresAt != null &&
+                  booking.holdExpiresAt!.toDate().isBefore(DateTime.now()));
+
           final endDateTime = _parseDateTime(booking.date, booking.endTime);
           final isTimePassed = endDateTime.isBefore(DateTime.now());
-          final effectiveExpired = isExpired || (booking.status == 'pending' && isTimePassed);
-          final isCompleted = (booking.status == 'booked' || booking.status == 'confirmed') && isTimePassed;
+          final effectiveExpired =
+              isExpired || (booking.status == 'pending' && isTimePassed);
+          final isCompleted =
+              (booking.status == 'booked' || booking.status == 'confirmed') &&
+                  isTimePassed;
 
           // Determine card style based on status
           Color? cardColor;
@@ -164,22 +176,25 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
           return Card(
             color: cardColor,
-            elevation: (effectiveExpired || booking.status == 'cancelled') ? 0 : 2,
+            elevation:
+                (effectiveExpired || booking.status == 'cancelled') ? 0 : 2,
             margin: const EdgeInsets.only(bottom: 16, left: 4, right: 4),
             child: InkWell(
-              onTap: (effectiveExpired || booking.status == 'cancelled') 
-                  ? null 
+              onTap: (effectiveExpired || booking.status == 'cancelled')
+                  ? null
                   : () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => BookingDetailScreen(booking: booking),
-                      ),
-                    );
-                  },
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              BookingDetailScreen(booking: booking),
+                        ),
+                      );
+                    },
               child: ListTile(
                 title: Text(
                   booking.venueName,
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(color: textColor, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,7 +205,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     ),
                     if (!isCompleted) ...[
                       Text(
-                        effectiveExpired ? 'Status: Expired' : 'Status: ${booking.status}',
+                        effectiveExpired
+                            ? 'Status: Expired'
+                            : 'Status: ${booking.status}',
                         style: TextStyle(
                           color: effectiveExpired ? Colors.grey : textColor,
                         ),
@@ -199,7 +216,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         Text(
                           'Payment: ${booking.paymentStatus}',
                           style: TextStyle(
-                            color: booking.paymentStatus == 'paid' ? Colors.green : Colors.orange,
+                            color: booking.paymentStatus == 'paid'
+                                ? Colors.green
+                                : Colors.orange,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -213,12 +232,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                       ),
                   ],
                 ),
-                trailing: (booking.paymentStatus == 'pending' && !effectiveExpired && !isCompleted && booking.status != 'cancelled')
+                trailing: (booking.paymentStatus == 'pending' &&
+                        !effectiveExpired &&
+                        !isCompleted &&
+                        booking.status != 'cancelled')
                     ? ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => PaymentScreen(booking: booking),
+                              builder: (context) =>
+                                  PaymentScreen(booking: booking),
                             ),
                           );
                         },

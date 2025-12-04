@@ -8,7 +8,14 @@ import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  // Load environment variables from `.env` if present. Don't crash the app
+  // when the file is missing or malformed — just log and continue so the
+  // splash screen won't block forever.
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e, st) {
+    debugPrint('Warning: failed to load .env: $e\n$st');
+  }
   
   try {
     await Firebase.initializeApp(

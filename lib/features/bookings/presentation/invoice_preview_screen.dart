@@ -24,7 +24,8 @@ class InvoicePreviewScreen extends StatefulWidget {
 }
 
 class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -33,9 +34,11 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
   }
 
   Future<void> _initNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
-    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+    const initSettings =
+        InitializationSettings(android: androidSettings, iOS: iosSettings);
     await _notificationsPlugin.initialize(initSettings);
   }
 
@@ -60,10 +63,11 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
     );
   }
 
-  Future<void> _saveFile(BuildContext context, LayoutCallback build, PdfPageFormat pageFormat) async {
+  Future<void> _saveFile(BuildContext context, LayoutCallback build,
+      PdfPageFormat pageFormat) async {
     try {
       String? filePath;
-      
+
       if (Platform.isAndroid) {
         // Android Logic
         if (await _requestPermission()) {
@@ -71,7 +75,7 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
           if (!await directory.exists()) {
             await directory.create(recursive: true);
           }
-          
+
           final file = File('${directory.path}/${widget.fileName}');
           await file.writeAsBytes(widget.pdfBytes);
           filePath = file.path;
@@ -91,7 +95,7 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
         filePath = file.path;
       }
 
-      await _showNotification(filePath!);
+      await _showNotification(filePath);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -115,21 +119,23 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
   Future<bool> _requestPermission() async {
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
-      
+
       // Request notification permission for Android 13+
       if (androidInfo.version.sdkInt >= 33) {
-        await _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+        await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestNotificationsPermission();
       }
 
       if (androidInfo.version.sdkInt >= 33) {
         // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for app-specific or public downloads if using MediaStore,
         // but writing directly to /storage/emulated/0/Download might still be restricted.
         // However, for this simple implementation, we'll assume it works or user grants access.
-        // Actually, on Android 13, we might need to use Manage External Storage if we want raw access, 
+        // Actually, on Android 13, we might need to use Manage External Storage if we want raw access,
         // but that's restricted.
         // Let's try without permission first as some devices allow writing to Downloads.
-        return true; 
+        return true;
       } else {
         final status = await Permission.storage.request();
         return status.isGranted;
@@ -147,7 +153,8 @@ class _InvoicePreviewScreenState extends State<InvoicePreviewScreen> {
       priority: Priority.high,
     );
     const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    const details =
+        NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _notificationsPlugin.show(
       0,

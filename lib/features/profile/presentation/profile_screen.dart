@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
@@ -15,7 +16,7 @@ class ProfileScreen extends ConsumerWidget {
       body: authState.when(
         data: (user) {
           if (user == null) return const Center(child: Text('Not logged in'));
-          
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -24,40 +25,42 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: user.photoURL != null 
-                        ? NetworkImage(user.photoURL!) 
-                        : null,
+                      backgroundImage: user.photoURL != null
+                          ? NetworkImage(user.photoURL!)
+                          : null,
                       backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                      child: user.photoURL == null 
-                        ? Text(
-                            user.displayName?.substring(0, 1).toUpperCase() ?? 'U',
-                            style: const TextStyle(fontSize: 40, color: AppTheme.primaryColor),
-                          )
-                        : null,
+                      child: user.photoURL == null
+                          ? Text(
+                              user.displayName?.substring(0, 1).toUpperCase() ??
+                                  'U',
+                              style: const TextStyle(
+                                  fontSize: 40, color: AppTheme.primaryColor),
+                            )
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       user.displayName ?? 'User',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     Text(
                       user.email,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                            color: Colors.grey[600],
+                          ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
-              
               ListTile(
                 leading: const Icon(Icons.person_outline),
                 title: const Text('Edit Profile'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {},
+                onTap: () => context.push('/profile/edit'),
               ),
               const Divider(),
               ListTile(
@@ -76,7 +79,8 @@ class ProfileScreen extends ConsumerWidget {
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: AppTheme.errorColor),
-                title: const Text('Logout', style: TextStyle(color: AppTheme.errorColor)),
+                title: const Text('Logout',
+                    style: TextStyle(color: AppTheme.errorColor)),
                 onTap: () {
                   ref.read(authControllerProvider.notifier).signOut();
                 },

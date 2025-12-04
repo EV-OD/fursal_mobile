@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../domain/auth_user.dart';
@@ -26,7 +28,7 @@ class AuthRepository {
   Stream<AuthUser?> get authStateChanges {
     return _auth.authStateChanges().asyncMap((user) async {
       if (user == null) return null;
-      
+
       // Fetch user data from Firestore
       try {
         final doc = await _firestore.collection('users').doc(user.uid).get();
@@ -61,12 +63,13 @@ class AuthRepository {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
-  Future<void> createUserWithEmailAndPassword(String email, String password, String name) async {
+  Future<void> createUserWithEmailAndPassword(
+      String email, String password, String name) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
-    
+
     if (credential.user != null) {
       await _saveUserToFirestore(credential.user!, name);
     }
@@ -76,7 +79,8 @@ class AuthRepository {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return; // User canceled
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
     final AuthCredential credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
@@ -85,9 +89,13 @@ class AuthRepository {
     final userCredential = await _auth.signInWithCredential(credential);
     if (userCredential.user != null) {
       // Check if user exists, if not create
-      final doc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+      final doc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
       if (!doc.exists) {
-        await _saveUserToFirestore(userCredential.user!, googleUser.displayName ?? 'User');
+        await _saveUserToFirestore(
+            userCredential.user!, googleUser.displayName ?? 'User');
       }
     }
   }
@@ -109,10 +117,42 @@ class AuthRepository {
       photoURL: user.photoURL,
       role: 'user', // Default role
     );
-    
+
     await _firestore.collection('users').doc(user.uid).set({
       ...authUser.toMap(),
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<void> updateProfile({String? displayName, String? photoURL}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    if (displayName != null) {
+      await user.updateDisplayName(displayName);
+    }
+    if (photoURL != null) {
+      await user.updatePhotoURL(photoURL);
+    }
+
+    // Update Firestore
+    final updates = <String, dynamic>{};
+    if (displayName != null) updates['displayName'] = displayName;
+    if (photoURL != null) updates['photoURL'] = photoURL;
+
+    if (updates.isNotEmpty) {
+      await _firestore.collection('users').doc(user.uid).update(updates);
+    }
+  }
+
+  Future<String> uploadProfileImage(File file, String userId) async {
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child('user_profiles')
+        .child(userId)
+        .child('profile.jpg');
+
+    await storageRef.putFile(file);
+    return await storageRef.getDownloadURL();
   }
 }

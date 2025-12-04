@@ -15,8 +15,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
       case 0:
         return 'Fursal';
       case 1:
-        return 'My Bookings';
+        return 'Venues';
       case 2:
+        return 'My Bookings';
+      case 3:
         return 'Profile';
       default:
         return 'Fursal';
@@ -40,7 +42,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () => context.push('/notifications'),
           ),
           const SizedBox(width: 8),
         ],
@@ -62,8 +64,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
             label: 'Home',
           ),
           NavigationDestination(
+            icon: Icon(Icons.stadium_outlined),
+            selectedIcon: Icon(Icons.stadium, color: AppTheme.primaryColor),
+            label: 'Venues',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+            selectedIcon:
+                Icon(Icons.calendar_today, color: AppTheme.primaryColor),
             label: 'Bookings',
           ),
           NavigationDestination(

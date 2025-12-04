@@ -11,19 +11,30 @@ import '../features/home/presentation/home_screen.dart';
 import '../features/manager/presentation/manager_bookings_screen.dart';
 import '../features/manager/presentation/manager_home_screen.dart';
 import '../features/manager/presentation/manager_profile_screen.dart';
+import '../features/notifications/presentation/notification_screen.dart';
+import '../features/profile/presentation/edit_profile_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/venues/presentation/venue_detail_screen.dart';
+import '../features/venues/presentation/venue_list_screen.dart';
 import '../shared/widgets/manager_scaffold_with_navbar.dart';
 import '../shared/widgets/scaffold_with_navbar.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
-final _shellNavigatorBookingKey = GlobalKey<NavigatorState>(debugLabel: 'shellBooking');
-final _shellNavigatorProfileKey = GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
+final _shellNavigatorHomeKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellHome');
+final _shellNavigatorBookingKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellBooking');
+final _shellNavigatorProfileKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
+final _shellNavigatorVenuesKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellVenues');
 
-final _shellNavigatorManagerHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellManagerHome');
-final _shellNavigatorManagerBookingKey = GlobalKey<NavigatorState>(debugLabel: 'shellManagerBooking');
-final _shellNavigatorManagerProfileKey = GlobalKey<NavigatorState>(debugLabel: 'shellManagerProfile');
+final _shellNavigatorManagerHomeKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerHome');
+final _shellNavigatorManagerBookingKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerBooking');
+final _shellNavigatorManagerProfileKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerProfile');
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -43,6 +54,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationScreen(),
       ),
       // Manager Shell Route
       StatefulShellRoute.indexedStack(
@@ -93,7 +109,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const HomeScreen(),
                 routes: [
                   GoRoute(
-                    path: 'venue/:id', // Note: relative path, so it becomes /home/venue/:id
+                    path:
+                        'venue/:id', // Note: relative path, so it becomes /home/venue/:id
                     parentNavigatorKey: _rootNavigatorKey, // Hide bottom nav
                     builder: (context, state) {
                       final id = state.pathParameters['id']!;
@@ -120,6 +137,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: _shellNavigatorVenuesKey,
+            routes: [
+              GoRoute(
+                path: '/venues',
+                builder: (context, state) => const VenueListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
             navigatorKey: _shellNavigatorBookingKey,
             routes: [
               GoRoute(
@@ -134,6 +160,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const EditProfileScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -144,7 +177,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.isLoading;
       final hasError = authState.hasError;
       final isLoggedIn = authState.valueOrNull != null;
-      
       final isSplash = state.uri.toString() == '/';
       final isGetStarted = state.uri.toString() == '/get-started';
       final isLoggingIn = state.uri.toString() == '/login';

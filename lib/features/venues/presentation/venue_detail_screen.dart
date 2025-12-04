@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../venues/data/venue_repository.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'widgets/venue_image_carousel.dart';
 import 'widgets/review_section.dart';
 
@@ -18,7 +20,9 @@ class VenueDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: venueAsync.when(
         data: (venue) {
-          if (venue == null) return const Center(child: Text('Venue not found'));
+          if (venue == null) {
+            return const Center(child: Text('Venue not found'));
+          }
 
           return Stack(
             children: [
@@ -27,7 +31,7 @@ class VenueDetailScreen extends ConsumerWidget {
                 bottom: MediaQuery.of(context).size.height * 0.45,
                 child: VenueImageCarousel(imageUrls: venue.imageUrls),
               ),
-              
+
               // Custom Back Button
               Positioned(
                 top: MediaQuery.of(context).padding.top + 16,
@@ -50,7 +54,8 @@ class VenueDetailScreen extends ConsumerWidget {
                   return Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(32)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black12,
@@ -84,22 +89,27 @@ class VenueDetailScreen extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 venue.name,
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.black,
-                                  fontSize: 26,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.black,
+                                      fontSize: 26,
+                                    ),
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: AppTheme.primaryColor,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.star, color: Colors.white, size: 16),
+                                  const Icon(Icons.star,
+                                      color: Colors.white, size: 16),
                                   const SizedBox(width: 4),
                                   Text(
                                     venue.averageRating.toStringAsFixed(1),
@@ -114,11 +124,12 @@ class VenueDetailScreen extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        
+
                         // Address
                         Row(
                           children: [
-                            Icon(Icons.location_on, color: Colors.grey[400], size: 20),
+                            Icon(Icons.location_on,
+                                color: Colors.grey[400], size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -131,16 +142,17 @@ class VenueDetailScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Description
                         Text(
                           'About Venue',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -151,17 +163,20 @@ class VenueDetailScreen extends ConsumerWidget {
                             fontSize: 15,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Amenities
                         if (venue.attributes.isNotEmpty) ...[
                           Text(
                             'Amenities',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
                           ),
                           const SizedBox(height: 16),
                           Wrap(
@@ -169,7 +184,8 @@ class VenueDetailScreen extends ConsumerWidget {
                             runSpacing: 12,
                             children: venue.attributes.entries.map((entry) {
                               return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color: Colors.grey[50],
                                   borderRadius: BorderRadius.circular(12),
@@ -201,6 +217,86 @@ class VenueDetailScreen extends ConsumerWidget {
 
                         const SizedBox(height: 32),
 
+                        // Location Map
+                        Text(
+                          'Location',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            children: [
+                              // We can reuse VenueMapView or use flutter_map directly
+                              // Using flutter_map directly for simplicity here as we just need a static view
+                              IgnorePointer(
+                                // Make it static/non-interactive if desired, or remove to allow interaction
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter:
+                                        LatLng(venue.latitude, venue.longitude),
+                                    initialZoom: 15.0,
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName:
+                                          'com.example.tournament',
+                                    ),
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: LatLng(
+                                              venue.latitude, venue.longitude),
+                                          width: 40,
+                                          height: 40,
+                                          child: const Icon(
+                                            Icons.location_on,
+                                            color: Colors.red,
+                                            size: 40,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // "View on Map" overlay button (optional)
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    // Open external map or full screen map
+                                    // For now, maybe just show a snackbar or nothing
+                                  },
+                                  icon: const Icon(Icons.map, size: 16),
+                                  label: const Text('Open Maps'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    elevation: 2,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
                         // Reviews Section
                         ReviewSection(venueId: venueId),
                       ],
@@ -220,7 +316,7 @@ class VenueDetailScreen extends ConsumerWidget {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withAlpha(13), // 0.05 * 255
                         blurRadius: 20,
                         offset: const Offset(0, -5),
                       ),

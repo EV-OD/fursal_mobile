@@ -7,7 +7,7 @@ class VenueListCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const VenueListCard({
-    super.key, 
+    super.key,
     required this.venue,
     this.onTap,
   });
@@ -15,7 +15,7 @@ class VenueListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -42,7 +42,8 @@ class VenueListCard extends StatelessWidget {
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
                     child: AspectRatio(
                       aspectRatio: 16 / 9,
                       child: venue.imageUrls.isNotEmpty
@@ -52,13 +53,15 @@ class VenueListCard extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: Colors.grey.shade100,
-                                  child: Icon(Icons.broken_image, size: 40, color: Colors.grey.shade400),
+                                  child: Icon(Icons.broken_image,
+                                      size: 40, color: Colors.grey.shade400),
                                 );
                               },
                             )
                           : Container(
                               color: Colors.grey.shade100,
-                              child: Icon(Icons.sports_soccer, size: 40, color: Colors.grey.shade400),
+                              child: Icon(Icons.sports_soccer,
+                                  size: 40, color: Colors.grey.shade400),
                             ),
                     ),
                   ),
@@ -67,7 +70,8 @@ class VenueListCard extends StatelessWidget {
                     top: 12,
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: theme.cardColor,
                         borderRadius: BorderRadius.circular(8),
@@ -81,7 +85,8 @@ class VenueListCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, color: AppTheme.secondaryColor, size: 16),
+                          const Icon(Icons.star_rounded,
+                              color: AppTheme.secondaryColor, size: 16),
                           const SizedBox(width: 4),
                           Text(
                             venue.averageRating.toStringAsFixed(1),
@@ -95,7 +100,7 @@ class VenueListCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               // Content Section
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -116,7 +121,8 @@ class VenueListCard extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: theme.primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
@@ -135,7 +141,8 @@ class VenueListCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 16, color: AppTheme.textSecondary),
+                        const Icon(Icons.location_on_outlined,
+                            size: 16, color: AppTheme.textSecondary),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -148,13 +155,22 @@ class VenueListCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
-                        _buildFeatureChip(Icons.grass, 'Turf', theme),
-                        const SizedBox(width: 8),
-                        _buildFeatureChip(Icons.local_parking, 'Parking', theme),
-                        const SizedBox(width: 8),
-                        _buildFeatureChip(Icons.wifi, 'WiFi', theme),
+                        if (venue.attributes.containsKey('Turf'))
+                          _buildFeatureChip(Icons.grass, 'Turf', theme),
+                        if (venue.attributes.containsKey('Parking'))
+                          _buildFeatureChip(
+                              Icons.local_parking, 'Parking', theme),
+                        if (venue.attributes.containsKey('WiFi'))
+                          _buildFeatureChip(Icons.wifi, 'WiFi', theme),
+                        if (venue.attributes.containsKey('Changing Room'))
+                          _buildFeatureChip(
+                              Icons.checkroom, 'Changing Room', theme),
+                        if (venue.attributes.containsKey('Water'))
+                          _buildFeatureChip(Icons.water_drop, 'Water', theme),
                       ],
                     ),
                   ],
