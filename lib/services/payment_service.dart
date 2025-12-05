@@ -46,11 +46,52 @@ class PaymentService {
     });
 
     if (resp.statusCode != 200 && resp.statusCode != 201) {
-      await LoggerService().error('Payment initiate failed', meta: {'status': resp.statusCode, 'body': resp.body});
-      throw Exception('Payment initiate failed: ${resp.statusCode} ${resp.body}');
+      await LoggerService().error('Payment initiate failed',
+          meta: {'status': resp.statusCode, 'body': resp.body});
+      throw Exception(
+          'Payment initiate failed: ${resp.statusCode} ${resp.body}');
     }
 
     final Map<String, dynamic> json = jsonDecode(resp.body);
+    // Validate expected fields strictly. Backend must return:
+    // - 'signature' (string)
+    // - 'transactionUuid' (string)
+    // - 'paymentParams' (object) containing: amount, totalAmount, successUrl, failureUrl, productCode, transactionUuid
+    final List<String> missing = [];
+
+    if (json['signature'] == null || (json['signature'] is! String))
+      missing.add('signature');
+    if (json['transactionUuid'] == null || (json['transactionUuid'] is! String))
+      missing.add('transactionUuid');
+
+    final paymentParams = json['paymentParams'];
+    if (paymentParams == null || paymentParams is! Map<String, dynamic>) {
+      missing.add('paymentParams');
+    } else {
+      final requiredPm = [
+        'amount',
+        'totalAmount',
+        'successUrl',
+        'failureUrl',
+        'productCode',
+        'transactionUuid'
+      ];
+      for (final k in requiredPm) {
+        if (!paymentParams.containsKey(k) || paymentParams[k] == null)
+          missing.add('paymentParams.$k');
+      }
+    }
+
+    if (missing.isNotEmpty) {
+      await LoggerService().error('Payment initiate missing fields', meta: {
+        'missing': missing,
+        'response': json,
+      });
+      throw Exception(
+          'Payment initiation response missing required fields: ${missing.join(', ')}');
+    }
+
+    // Return the parsed response as-is; caller must use the provided transactionUuid, signature and paymentParams.
     return json;
   }
 
@@ -59,13 +100,20 @@ class PaymentService {
   Future<Map<String, dynamic>> verifyPayment({
     required String transactionUuid,
     required String responseData,
+    required String productCode,
+    required double totalAmount,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('Not authenticated');
 
     final idToken = await user.getIdToken();
     final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/payment/verify');
-    final bodyMap = {'transactionUuid': transactionUuid, 'responseData': responseData};
+    final bodyMap = {
+      'transactionUuid': transactionUuid,
+      'responseData': responseData,
+      'productCode': productCode,
+      'totalAmount': totalAmount,
+    };
     final body = jsonEncode(bodyMap);
 
     await LoggerService().info('verifyPayment: request', meta: {
@@ -89,7 +137,8 @@ class PaymentService {
     });
 
     if (resp.statusCode != 200 && resp.statusCode != 201) {
-      await LoggerService().error('Payment verify failed', meta: {'status': resp.statusCode, 'body': resp.body});
+      await LoggerService().error('Payment verify failed',
+          meta: {'status': resp.statusCode, 'body': resp.body});
       throw Exception('Payment verify failed: ${resp.statusCode} ${resp.body}');
     }
 

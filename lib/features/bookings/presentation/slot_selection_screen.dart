@@ -9,8 +9,10 @@ import '../../../core/theme.dart';
 import '../../venues/data/venue_repository.dart';
 import '../../venues/domain/venue_slot.dart';
 import '../domain/booking.dart';
+import '../data/checkout_state.dart';
 // booking_repository import removed; backend now handles booking persistence
 import '../../../services/booking_service.dart';
+import '../../../services/payment_service.dart';
 import 'payment_screen.dart';
 
 class SlotSelectionScreen extends ConsumerStatefulWidget {
@@ -26,12 +28,14 @@ class SlotSelectionScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SlotSelectionScreen> createState() => _SlotSelectionScreenState();
+  ConsumerState<SlotSelectionScreen> createState() =>
+      _SlotSelectionScreenState();
 }
 
 class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
   DateTime _selectedDate = DateTime.now();
   String? _selectedSlotTime;
+  bool _isProcessing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -48,14 +52,17 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.appBarTheme.iconTheme?.color),
+          icon:
+              Icon(Icons.arrow_back, color: theme.appBarTheme.iconTheme?.color),
           onPressed: () => context.pop(),
         ),
       ),
       body: venueSlotsAsync.when(
         data: (venueSlots) {
           if (venueSlots == null) {
-            return Center(child: Text('No slot configuration found for this venue.', style: theme.textTheme.bodyLarge));
+            return Center(
+                child: Text('No slot configuration found for this venue.',
+                    style: theme.textTheme.bodyLarge));
           }
           return Column(
             children: [
@@ -68,7 +75,9 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err', style: TextStyle(color: theme.colorScheme.error))),
+        error: (err, stack) => Center(
+            child: Text('Error: $err',
+                style: TextStyle(color: theme.colorScheme.error))),
       ),
     );
   }
@@ -145,7 +154,9 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
     if (slots.isEmpty) {
-      return Center(child: Text('No slots available for this day.', style: theme.textTheme.bodyLarge));
+      return Center(
+          child: Text('No slots available for this day.',
+              style: theme.textTheme.bodyLarge));
     }
 
     return ListView(
@@ -180,9 +191,10 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
     );
   }
 
-  Widget _buildSlotItem(String time, SlotStatus status, bool isSelected, ThemeData theme) {
+  Widget _buildSlotItem(
+      String time, SlotStatus status, bool isSelected, ThemeData theme) {
     final isAvailable = status == SlotStatus.available;
-    
+
     Color backgroundColor;
     Color textColor;
     Color borderColor;
@@ -256,7 +268,9 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
               style: TextStyle(
                 color: textColor,
                 fontWeight: FontWeight.w600,
-                decoration: !isAvailable && icon == null ? TextDecoration.lineThrough : null,
+                decoration: !isAvailable && icon == null
+                    ? TextDecoration.lineThrough
+                    : null,
                 fontSize: 13,
               ),
             ),
@@ -274,15 +288,21 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
       children: [
         _buildLegendItem('Available', theme.cardColor, Colors.grey.shade200),
         _buildLegendItem('Selected', theme.primaryColor, theme.primaryColor),
-        _buildLegendItem('Online', AppTheme.errorColor.withOpacity(0.1), AppTheme.errorColor.withOpacity(0.2), icon: Icons.language, iconColor: AppTheme.errorColor),
-        _buildLegendItem('Physical', AppTheme.errorColor.withOpacity(0.1), AppTheme.errorColor.withOpacity(0.2), icon: Icons.person, iconColor: AppTheme.errorColor),
-        _buildLegendItem('Held', AppTheme.secondaryColor.withOpacity(0.1), AppTheme.secondaryColor.withOpacity(0.2)),
+        _buildLegendItem('Online', AppTheme.errorColor.withOpacity(0.1),
+            AppTheme.errorColor.withOpacity(0.2),
+            icon: Icons.language, iconColor: AppTheme.errorColor),
+        _buildLegendItem('Physical', AppTheme.errorColor.withOpacity(0.1),
+            AppTheme.errorColor.withOpacity(0.2),
+            icon: Icons.person, iconColor: AppTheme.errorColor),
+        _buildLegendItem('Held', AppTheme.secondaryColor.withOpacity(0.1),
+            AppTheme.secondaryColor.withOpacity(0.2)),
         // _buildLegendItem('Reserved', Colors.purple.shade50, Colors.purple.shade100),
       ],
     );
   }
 
-  Widget _buildLegendItem(String label, Color color, Color borderColor, {IconData? icon, Color? iconColor}) {
+  Widget _buildLegendItem(String label, Color color, Color borderColor,
+      {IconData? icon, Color? iconColor}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -294,9 +314,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: borderColor),
           ),
-          child: icon != null 
-            ? Icon(icon, size: 12, color: iconColor) 
-            : null,
+          child: icon != null ? Icon(icon, size: 12, color: iconColor) : null,
         ),
         const SizedBox(width: 6),
         Text(
@@ -343,29 +361,46 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
             const SizedBox(width: 24),
             Expanded(
               child: ElevatedButton(
-                onPressed: _selectedSlotTime != null
+                onPressed: (_selectedSlotTime != null && !_isProcessing)
                     ? () async {
                         final user = FirebaseAuth.instance.currentUser;
                         if (user == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please login to continue')),
+                            const SnackBar(
+                                content: Text('Please login to continue')),
                           );
                           return;
                         }
 
+                        setState(() {
+                          _isProcessing = true;
+                        });
+
+                        // Reset checkout state before starting new checkout
+                        ref.read(checkoutProvider.notifier).reset();
+
                         try {
-                          final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-                          
+                          final dateStr =
+                              DateFormat('yyyy-MM-dd').format(_selectedDate);
+
                           // Calculate end time
                           final startParts = _selectedSlotTime!.split(':');
                           final startHour = int.parse(startParts[0]);
                           final startMinute = int.parse(startParts[1]);
-                          final startTime = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, startHour, startMinute);
-                          final endTime = startTime.add(Duration(minutes: config.slotDuration));
-                          final endTimeStr = DateFormat('HH:mm').format(endTime);
+                          final startTime = DateTime(
+                              _selectedDate.year,
+                              _selectedDate.month,
+                              _selectedDate.day,
+                              startHour,
+                              startMinute);
+                          final endTime = startTime
+                              .add(Duration(minutes: config.slotDuration));
+                          final endTimeStr =
+                              DateFormat('HH:mm').format(endTime);
 
                           // Create booking via backend API (server will check slot availability atomically)
-                          final resp = await BookingService().createBookingViaApi(
+                          final resp =
+                              await BookingService().createBookingViaApi(
                             venueId: widget.venueId,
                             date: dateStr,
                             startTime: _selectedSlotTime!,
@@ -374,7 +409,9 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                             metadata: null,
                           );
 
-                          final bookingId = resp['bookingId'] ?? resp['id'] ?? const Uuid().v4();
+                          final bookingId = resp['bookingId'] ??
+                              resp['id'] ??
+                              const Uuid().v4();
 
                           // Construct local booking model for UI navigation
                           final booking = Booking(
@@ -388,13 +425,45 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                             amount: widget.pricePerHour,
                             status: 'pending',
                             createdAt: Timestamp.now(),
-                            holdExpiresAt: Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
+                            holdExpiresAt: Timestamp.fromDate(
+                                DateTime.now().add(const Duration(minutes: 5))),
                           );
+
+                          // Store booking in global state
+                          ref
+                              .read(checkoutProvider.notifier)
+                              .setBooking(booking);
+
+                          // Calculate partial payment amount (16.666% of total)
+                          // e.g. 1200 * 0.16666 = ~199.992 -> rounded to 200 (ceil)
+                          final partialAmount =
+                              (widget.pricePerHour * 16.666 / 100)
+                                  .ceilToDouble();
+
+                          // Initiate payment and store params in global state
+                          final paymentService = PaymentService();
+                          final paymentResp =
+                              await paymentService.initiatePayment(
+                            bookingId: bookingId,
+                            totalAmount:
+                                partialAmount, // Send partial amount to initiate
+                          );
+
+                          final paymentParams = paymentResp['paymentParams']
+                              as Map<String, dynamic>;
+                          ref.read(checkoutProvider.notifier).setPaymentParams(
+                                paymentParams: paymentParams,
+                                transactionUuid:
+                                    paymentParams['transactionUuid'] as String,
+                                signature: paymentResp['signature'] as String,
+                                productCode:
+                                    paymentParams['productCode'] as String,
+                              );
 
                           if (mounted) {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => PaymentScreen(booking: booking),
+                                builder: (context) => const PaymentScreen(),
                               ),
                             );
                           }
@@ -403,6 +472,12 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Failed to proceed: $e')),
                             );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isProcessing = false;
+                            });
                           }
                         }
                       }
@@ -416,14 +491,36 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isProcessing
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Processing...',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ],
+                      )
+                    : const Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -444,15 +541,15 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
     }
 
     List<String> slots = [];
-    
+
     // Parse start and end times
     // Assuming format HH:mm
     final startParts = config.startTime.split(':');
     final endParts = config.endTime.split(':');
-    
+
     int startHour = int.parse(startParts[0]);
     int startMinute = int.parse(startParts[1]);
-    
+
     int endHour = int.parse(endParts[0]);
     int endMinute = int.parse(endParts[1]);
 
@@ -492,7 +589,8 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
     }
 
     // Check bookings
-    final bookingIndex = data.bookings.indexWhere((b) => b.date == date && b.startTime == time && b.status != 'cancelled');
+    final bookingIndex = data.bookings.indexWhere((b) =>
+        b.date == date && b.startTime == time && b.status != 'cancelled');
     if (bookingIndex != -1) {
       final booking = data.bookings[bookingIndex];
       if (booking.bookingType == 'physical') {

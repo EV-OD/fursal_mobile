@@ -7,6 +7,8 @@ import 'package:crypto/crypto.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 import '../domain/booking.dart';
+import '../data/checkout_state.dart';
+import '../../../services/payment_service.dart';
 import 'payment_screen.dart';
 import 'invoice_preview_screen.dart';
 
@@ -22,6 +24,52 @@ class BookingDetailScreen extends ConsumerStatefulWidget {
 
 class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   bool _isGeneratingInvoice = false;
+  bool _isInitiatingPayment = false;
+
+  Future<void> _initiatePaymentAndNavigate(Booking booking) async {
+    setState(() => _isInitiatingPayment = true);
+
+    try {
+      // Reset and set booking in checkout state
+      ref.read(checkoutProvider.notifier).reset();
+      ref.read(checkoutProvider.notifier).setBooking(booking);
+
+      // Initiate payment
+      final paymentService = PaymentService();
+      // Calculate partial amount (16.666%)
+      final partialAmount = (booking.amount * 16.666 / 100).ceilToDouble();
+
+      final paymentResp = await paymentService.initiatePayment(
+        bookingId: booking.id,
+        totalAmount: partialAmount,
+      );
+
+      final paymentParams =
+          paymentResp['paymentParams'] as Map<String, dynamic>;
+      ref.read(checkoutProvider.notifier).setPaymentParams(
+            paymentParams: paymentParams,
+            transactionUuid: paymentParams['transactionUuid'] as String,
+            signature: paymentResp['signature'] as String,
+            productCode: paymentParams['productCode'] as String,
+          );
+
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const PaymentScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to initiate payment: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isInitiatingPayment = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,19 +129,22 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => PaymentScreen(booking: booking),
-                      ),
-                    );
-                  },
+                  onPressed: _isInitiatingPayment
+                      ? null
+                      : () => _initiatePaymentAndNavigate(booking),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
+                    disabledBackgroundColor: Colors.green.shade200,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Pay Now',
-                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: _isInitiatingPayment
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Text('Pay Now',
+                          style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ),
               const SizedBox(height: 16),
