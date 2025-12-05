@@ -13,6 +13,7 @@ import '../features/manager/presentation/manager_bookings_screen.dart';
 import '../features/manager/presentation/manager_dashboard_screen.dart';
 
 import '../features/manager/presentation/manager_home_screen.dart';
+import '../features/manager/presentation/manager_scan_qr_screen.dart';
 import '../features/notifications/presentation/notification_screen.dart';
 import '../features/profile/presentation/edit_profile_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
@@ -128,9 +129,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/manager/scan-qr',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Scan QR - Coming Soon')),
-                ),
+                builder: (context, state) => const ManagerScanQRScreen(),
               ),
             ],
           ),
