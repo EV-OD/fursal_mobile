@@ -8,9 +8,12 @@ import '../features/auth/presentation/splash_screen.dart';
 import '../features/bookings/presentation/booking_screen.dart';
 import '../features/bookings/presentation/slot_selection_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/manager/presentation/create_venue_screen.dart';
 import '../features/manager/presentation/manager_bookings_screen.dart';
+import '../features/manager/presentation/manager_dashboard_screen.dart';
+
 import '../features/manager/presentation/manager_home_screen.dart';
-import '../features/manager/presentation/manager_profile_screen.dart';
+import '../features/manager/presentation/manager_scan_qr_screen.dart';
 import '../features/notifications/presentation/notification_screen.dart';
 import '../features/profile/presentation/edit_profile_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
@@ -29,12 +32,16 @@ final _shellNavigatorProfileKey =
 final _shellNavigatorVenuesKey =
     GlobalKey<NavigatorState>(debugLabel: 'shellVenues');
 
-final _shellNavigatorManagerHomeKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shellManagerHome');
+final _shellNavigatorManagerDashboardKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerDashboard');
 final _shellNavigatorManagerBookingKey =
     GlobalKey<NavigatorState>(debugLabel: 'shellManagerBooking');
-final _shellNavigatorManagerProfileKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shellManagerProfile');
+final _shellNavigatorManagerPaymentsKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerPayments');
+final _shellNavigatorManagerVenuesKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerVenues');
+final _shellNavigatorManagerScanQRKey =
+    GlobalKey<NavigatorState>(debugLabel: 'shellManagerScanQR');
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -66,15 +73,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ManagerScaffoldWithNavBar(navigationShell: navigationShell);
         },
         branches: [
+          // 1. Dashboard
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorManagerHomeKey,
+            navigatorKey: _shellNavigatorManagerDashboardKey,
             routes: [
               GoRoute(
-                path: '/manager/home',
-                builder: (context, state) => const ManagerHomeScreen(),
+                path: '/manager/dashboard',
+                builder: (context, state) => const ManagerDashboardScreen(),
               ),
             ],
           ),
+          // 2. Bookings
           StatefulShellBranch(
             navigatorKey: _shellNavigatorManagerBookingKey,
             routes: [
@@ -84,12 +93,43 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // 3. Payments (Placeholder)
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorManagerProfileKey,
+            navigatorKey: _shellNavigatorManagerPaymentsKey,
             routes: [
               GoRoute(
-                path: '/manager/profile',
-                builder: (context, state) => const ManagerProfileScreen(),
+                path: '/manager/payments',
+                builder: (context, state) => const Scaffold(
+                  body: Center(child: Text('Payments - Coming Soon')),
+                ),
+              ),
+            ],
+          ),
+          // 4. My Venues
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorManagerVenuesKey,
+            routes: [
+              GoRoute(
+                path: '/manager/venues',
+                builder: (context, state) =>
+                    const ManagerHomeScreen(), // Reusing this as it lists venues
+                routes: [
+                  GoRoute(
+                    path: 'create-venue',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const CreateVenueScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // 5. Scan QR (Placeholder)
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorManagerScanQRKey,
+            routes: [
+              GoRoute(
+                path: '/manager/scan-qr',
+                builder: (context, state) => const ManagerScanQRScreen(),
               ),
             ],
           ),
@@ -188,7 +228,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isSplash || isGetStarted || isLoggingIn) {
           final role = authState.value?.role;
           if (role == 'manager') {
-            return '/manager/home';
+            return '/manager/dashboard';
           }
           return '/home';
         }

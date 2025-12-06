@@ -49,7 +49,10 @@ android/app/release
 **/build/
 .gradle/
 gradle-wrapper.jar
-
+gradle.properties
+settings.gradle
+build.gradle
+gradle-wrapper.properties
 # Firebase (DO NOT COMMIT THESE)
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist

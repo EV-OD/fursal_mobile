@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../venues/data/venue_repository.dart';
 import '../../../shared/widgets/venue_list_card.dart';
-import '../../../core/theme.dart';
 
 class ManagerHomeScreen extends ConsumerWidget {
   const ManagerHomeScreen({super.key});
@@ -18,15 +18,31 @@ class ManagerHomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      // AppBar is handled by ManagerScaffoldWithNavBar
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navigate to add venue screen
-        },
-        label: const Text('Add Venue'),
-        icon: const Icon(Icons.add),
-        backgroundColor: theme.primaryColor,
-        foregroundColor: theme.colorScheme.onPrimary,
+      appBar: AppBar(
+        title: const Text('My Venues',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                context.push('/manager/venues/create-venue');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black87,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Create New Venue'),
+            ),
+          ),
+        ],
       ),
       body: venuesAsync.when(
         data: (venues) {
@@ -35,21 +51,52 @@ class ManagerHomeScreen extends ConsumerWidget {
 
           if (myVenues.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.store_mall_directory_outlined, size: 64, color: AppTheme.textSecondary),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No venues managed yet',
-                    style: theme.textTheme.titleLarge?.copyWith(color: AppTheme.textSecondary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Add your first venue to get started',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.location_on_outlined,
+                          size: 48, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No venues yet',
+                      style: theme.textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Get started by creating your first venue',
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.push('/manager/venues/create-venue');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black87,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 20),
+                      label: const Text('Create New Venue'),
+                    ),
+                  ],
+                ),
               ),
             );
           }

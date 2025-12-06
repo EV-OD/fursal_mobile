@@ -44,19 +44,32 @@ class ManagerScaffoldWithNavBar extends StatelessWidget {
         indicatorColor: AppTheme.primaryColor.withOpacity(0.2),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.store_mall_directory_outlined),
-            selectedIcon: Icon(Icons.store_mall_directory, color: AppTheme.primaryColor),
-            label: 'My Venues',
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryColor),
+            label: 'Dashboard',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+            selectedIcon:
+                Icon(Icons.calendar_today, color: AppTheme.primaryColor),
             label: 'Bookings',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppTheme.primaryColor),
-            label: 'Profile',
+            icon: Icon(Icons.payment_outlined),
+            selectedIcon: Icon(Icons.payment, color: AppTheme.primaryColor),
+            label: 'Payments',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.store_mall_directory_outlined),
+            selectedIcon:
+                Icon(Icons.store_mall_directory, color: AppTheme.primaryColor),
+            label: 'My Venue',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.qr_code_scanner_outlined),
+            selectedIcon:
+                Icon(Icons.qr_code_scanner, color: AppTheme.primaryColor),
+            label: 'Scan QR',
           ),
         ],
       ),
@@ -66,13 +79,17 @@ class ManagerScaffoldWithNavBar extends StatelessWidget {
   String _getTitle(int index) {
     switch (index) {
       case 0:
-        return 'Manager Dashboard';
+        return 'Dashboard';
       case 1:
         return 'Bookings';
       case 2:
-        return 'Profile';
+        return 'Payments';
+      case 3:
+        return 'My Venues';
+      case 4:
+        return 'Scan QR';
       default:
-        return 'Manager Dashboard';
+        return 'Dashboard';
     }
   }
 }
